@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUCT VAULT — Engineering Document Management</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+<style>
+/* ═══════════════════════════ TOKENS ═══════════════════════════ */
+:root {
+  --bg:          #F4F5F7;
+  --surface:     #FFFFFF;
+  --surface-2:   #F0F1F4;
+  --surface-3:   #E8EAF0;
+  --border:      #DDE0EA;
+  --border-2:    #C8CCd8;
+  --tx-1:        #0D1117;
+  --tx-2:        #4A5068;
+  --tx-3:        #8B92A8;
+  --blue:        #1557FF;
+  --blue-dim:    #EEF2FF;
+  --blue-mid:    #C7D3FF;
+  --green:       #0F8C5A;
+  --green-dim:   #E6F7F1;
+  --red:         #D92B2B;
+  --red-dim:     #FFF0F0;
+  --amber:       #C07000;
+  --amber-dim:   #FFF8E6;
+  --purple:      #6E3EBB;
+  --purple-dim:  #F2EDFF;
+  --sh-sm:  0 1px 3px rgba(13,17,23,.06);
+  --sh:     0 4px 16px rgba(13,17,23,.08);
+  --sh-lg:  0 12px 40px rgba(13,17,23,.14);
+  --r:  8px;
+  --r-sm: 5px;
+  --r-lg: 14px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--tx-1); display:flex; }
+
+/* ═══════════════════════════ SCROLLBAR ═══════════════════════════ */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-2); border-radius:4px; }
+
+/* ═══════════════════════════ LOGIN SCREEN ═══════════════════════════ */
+#login-screen {
+  position:fixed; inset:0; z-index:999;
+  background: linear-gradient(135deg, #0D1117 0%, #141926 50%, #0D1117 100%);
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:0;
+}
+.login-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 52px 56px;
+  width: 420px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+  text-align: center;
+}
+.login-logo {
+  width: 52px; height: 52px; background: var(--blue);
+  border-radius: 14px; margin: 0 auto 20px;
+  display:flex; align-items:center; justify-content:center;
+}
+.login-logo svg { width:26px; height:26px; }
+.login-title {
+  font-family:'Barlow',sans-serif; font-weight:800; font-size:26px;
+  color:#fff; letter-spacing:0.02em; margin-bottom:6px;
+}
+.login-title span { color: #5580FF; }
+.login-sub { font-size:13px; color:rgba(255,255,255,0.45); margin-bottom:36px; letter-spacing:0.02em; }
+.login-divider { height:1px; background:rgba(255,255,255,0.08); margin:28px 0; }
+.login-version { font-size:11px; color:rgba(255,255,255,0.25); font-family:'IBM Plex Mono',monospace; margin-top:24px; }
+
+.btn-google {
+  width: 100%; padding: 13px 20px;
+  background: #fff; border: none; border-radius: 10px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  font-family:'IBM Plex Sans',sans-serif; font-size:14px; font-weight:600;
+  color: #1a1a1a; cursor:pointer; transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.btn-google:hover { background:#f5f5f5; transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.25); }
+.btn-google svg { width:20px; height:20px; flex-shrink:0; }
+
+.login-status {
+  margin-top:16px; font-size:12px; color:rgba(255,255,255,0.4);
+  min-height:18px; transition:all 0.2s;
+}
+.login-status.error { color:#FF6B6B; }
+.login-status.loading { color:#5580FF; }
+
+/* ═══════════════════════════ SIDEBAR ═══════════════════════════ */
+#app { display:flex; width:100%; height:100vh; opacity:0; transition:opacity 0.3s; }
+#app.visible { opacity:1; }
+
+.sidebar {
+  width:232px; min-width:232px;
+  background:var(--tx-1);
+  display:flex; flex-direction:column;
+  height:100vh; overflow:hidden;
+  position:relative;
+}
+
+.sb-logo {
+  padding:20px 18px 16px;
+  display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.sb-logo-icon {
+  width:32px; height:32px; background:var(--blue);
+  border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.sb-logo-icon svg { width:16px; height:16px; }
+.sb-logo-text { font-family:'Barlow',sans-serif; font-weight:800; font-size:13.5px; color:#fff; letter-spacing:0.03em; line-height:1.2; }
+.sb-logo-text em { color:#5580FF; font-style:normal; }
+.sb-logo-ver { font-size:9.5px; color:rgba(255,255,255,0.3); font-family:'IBM Plex Mono',monospace; letter-spacing:0.08em; }
+
+.sb-section { padding:18px 10px 6px; }
+.sb-section-label { font-size:9.5px; font-weight:600; color:rgba(255,255,255,0.25); text-transform:uppercase; letter-spacing:0.12em; padding:0 8px; margin-bottom:4px; }
+
+.sb-item {
+  display:flex; align-items:center; gap:9px;
+  padding:8px 10px; border-radius:var(--r-sm);
+  cursor:pointer; transition:all 0.12s;
+  font-size:13px; font-weight:500; color:rgba(255,255,255,0.55);
+  user-select:none; position:relative;
+}
+.sb-item:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.85); }
+.sb-item.active { background:rgba(85,128,255,0.18); color:#fff; }
+.sb-item.active::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:2px; height:18px; background:var(--blue); border-radius:2px; }
+.sb-icon { width:15px; height:15px; flex-shrink:0; opacity:0.7; }
+.sb-item.active .sb-icon, .sb-item:hover .sb-icon { opacity:1; }
+.sb-badge { margin-left:auto; font-size:10px; font-weight:700; background:rgba(85,128,255,0.3); color:#8AACFF; padding:1px 7px; border-radius:10px; }
+.sb-badge.warn { background:rgba(192,112,0,0.3); color:#FFB84D; }
+.sb-badge.red { background:rgba(217,43,43,0.3); color:#FF8A8A; }
+
+.sb-projects { padding:6px 10px 12px; flex:1; overflow-y:auto; }
+.sb-proj-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:var(--r-sm);
+  cursor:pointer; transition:all 0.12s;
+  font-size:12.5px; color:rgba(255,255,255,0.45);
+}
+.sb-proj-item:hover { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.75); }
+.sb-proj-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+.sb-storage {
+  padding:12px 14px;
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.sb-storage-label { display:flex; justify-content:space-between; font-size:10.5px; color:rgba(255,255,255,0.3); margin-bottom:6px; font-family:'IBM Plex Mono',monospace; }
+.sb-storage-bar { height:3px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
+.sb-storage-fill { height:100%; background:var(--blue); border-radius:2px; transition:width 0.4s; }
+.sb-storage-info { font-size:10px; color:rgba(255,255,255,0.2); margin-top:5px; }
+
+.sb-user {
+  padding:12px 14px;
+  border-top:1px solid rgba(255,255,255,0.07);
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+}
+.sb-user:hover { background:rgba(255,255,255,0.04); }
+.sb-avatar {
+  width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:#fff; flex-shrink:0;
+  background: var(--blue);
+}
+.sb-avatar img { width:30px; height:30px; border-radius:50%; object-fit:cover; }
+.sb-user-name { font-size:12.5px; font-weight:600; color:rgba(255,255,255,0.8); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-user-role { font-size:10.5px; color:rgba(255,255,255,0.3); }
+.sb-logout { margin-left:auto; cursor:pointer; color:rgba(255,255,255,0.25); transition:color 0.15s; flex-shrink:0; }
+.sb-logout:hover { color:rgba(255,255,255,0.6); }
+
+/* ═══════════════════════════ MAIN ═══════════════════════════ */
+.main { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; min-width:0; }
+
+.topbar {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0 24px; height:54px;
+  display:flex; align-items:center; gap:14px; flex-shrink:0;
+}
+.topbar-title { font-family:'Barlow',sans-serif; font-weight:700; font-size:16px; color:var(--tx-1); }
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+.search-wrap {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--r); padding:7px 12px; width:220px; transition:all 0.15s;
+}
+.search-wrap:focus-within { border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(21,87,255,0.1); }
+.search-wrap input { border:none; background:transparent; outline:none; font-size:13px; font-family:'IBM Plex Sans',sans-serif; color:var(--tx-1); width:100%; }
+.search-wrap input::placeholder { color:var(--tx-3); }
+
+.sync-pill {
+  display:flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600; color:var(--green);
+  background:var(--green-dim); padding:4px 10px; border-radius:20px;
+  cursor:pointer; transition:all 0.15s;
+}
+.sync-pill.syncing { color:var(--blue); background:var(--blue-dim); }
+.sync-pill.error { color:var(--red); background:var(--red-dim); }
+.sync-dot { width:5px; height:5px; border-radius:50%; background:currentColor; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+.btn {
+  display:inline-flex; align-items:center; gap:6px; padding:7px 14px;
+  border-radius:var(--r-sm); font-size:12.5px; font-weight:600;
+  font-family:'IBM Plex Sans',sans-serif; cursor:pointer; transition:all 0.12s;
+  border:none; white-space:nowrap;
+}
+.btn-primary { background:var(--blue); color:#fff; }
+.btn-primary:hover { background:#0F48E0; }
+.btn-secondary { background:var(--surface); color:var(--tx-2); border:1px solid var(--border); }
+.btn-secondary:hover { background:var(--surface-2); color:var(--tx-1); }
+.btn-sm { padding:5px 10px; font-size:12px; }
+.btn-icon { padding:7px; border-radius:var(--r-sm); background:transparent; border:1px solid transparent; color:var(--tx-3); }
+.btn-icon:hover { background:var(--surface-2); color:var(--tx-1); border-color:var(--border); }
+
+/* ═══════════════════════════ CONTENT ═══════════════════════════ */
+.content { flex:1; overflow-y:auto; padding:24px; }
+.view { display:none; }
+.view.active { display:block; }
+
+.page-hd { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; }
+.page-title { font-family:'Barlow',sans-serif; font-size:20px; font-weight:700; margin-bottom:3px; }
+.page-sub { font-size:12.5px; color:var(--tx-3); }
+.page-actions { display:flex; gap:8px; }
+
+/* ═══════════════════════════ STATS ═══════════════════════════ */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r); padding:18px 20px; box-shadow:var(--sh-sm);
+  position:relative; overflow:hidden;
+}
+.stat-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:var(--r) var(--r) 0 0; }
+.stat-card.blue::after { background:var(--blue); }
+.stat-card.green::after { background:var(--green); }
+.stat-card.amber::after { background:var(--amber); }
+.stat-card.red::after { background:var(--red); }
+.stat-lbl { font-size:10.5px; font-weight:600; color:var(--tx-3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:10px; }
+.stat-val { font-family:'Barlow',sans-serif; font-size:28px; font-weight:700; line-height:1; margin-bottom:6px; }
+.stat-note { font-size:11.5px; color:var(--tx-3); }
+.stat-note.up { color:var(--green); }
+.stat-note.warn { color:var(--amber); }
+.stat-note.err { color:var(--red); }
+.stat-ico { position:absolute; right:16px; top:18px; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+
+/* ═══════════════════════════ CARD ═══════════════════════════ */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--sh-sm); overflow:hidden; }
+.card-head { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-size:13.5px; font-weight:600; color:var(--tx-1); display:flex; align-items:center; gap:8px; }
+
+/* ═══════════════════════════ FILE TABLE ═══════════════════════════ */
+.file-bar {
+  display:flex; align-items:center; gap:8px; padding:10px 16px;
+  border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.path-crumb { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--tx-3); margin-right:auto; }
+.path-crumb a { color:var(--blue); cursor:pointer; font-weight:500; }
+.filter-chip {
+  display:flex; align-items:center; gap:4px; padding:4px 10px;
+  border-radius:20px; font-size:11.5px; font-weight:500;
+  border:1px solid var(--border); color:var(--tx-2); cursor:pointer; transition:all 0.12s;
+  background:var(--surface);
+}
+.filter-chip:hover { border-color:var(--blue); color:var(--blue); }
+.filter-chip.on { background:var(--blue-dim); border-color:var(--blue-mid); color:var(--blue); }
+
+.ft { width:100%; border-collapse:collapse; }
+.ft th {
+  text-align:left; padding:9px 14px;
+  font-size:10.5px; font-weight:600; color:var(--tx-3);
+  text-transform:uppercase; letter-spacing:0.08em;
+  background:var(--bg); border-bottom:1px solid var(--border);
+  white-space:nowrap; user-select:none; cursor:pointer;
+}
+.ft th:hover { color:var(--tx-1); }
+.ft td { padding:10px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+.ft tr:last-child td { border-bottom:none; }
+.ft tbody tr:hover td { background:var(--surface-2); cursor:pointer; }
+
+.f-icon {
+  width:28px; height:34px; border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:7.5px; font-weight:700; flex-shrink:0;
+  letter-spacing:0.02em; position:relative;
+}
+.f-icon::after { content:''; position:absolute; top:0; right:0; width:0; height:0; border-style:solid; border-width:0 7px 7px 0; border-color:transparent #fff transparent transparent; }
+.fi-pdf { background:#FEF0F0; color:var(--red); }
+.fi-cad { background:var(--purple-dim); color:var(--purple); }
+.fi-xls { background:var(--green-dim); color:var(--green); }
+.fi-doc { background:var(--blue-dim); color:var(--blue); }
+.fi-ppt { background:var(--amber-dim); color:var(--amber); }
+.fi-stp { background:#EDFDF4; color:#0A7D3E; }
+.fi-fld { background:var(--blue-dim); color:var(--blue); font-size:16px; }
+.f-name { font-weight:500; color:var(--tx-1); }
+.f-name:hover { color:var(--blue); }
+.f-desc { font-size:11px; color:var(--tx-3); margin-top:2px; }
+.f-cell { display:flex; align-items:center; gap:10px; }
+
+.ver-tag {
+  display:inline-flex; align-items:center;
+  font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500;
+  background:var(--surface-3); color:var(--tx-2);
+  padding:2px 7px; border-radius:4px; border:1px solid var(--border);
+}
+.ver-tag.cur { background:var(--green-dim); color:var(--green); border-color:transparent; }
+
+.s-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap;
+}
+.s-badge::before { content:''; width:4px; height:4px; border-radius:50%; background:currentColor; }
+.s-free     { background:var(--green-dim); color:var(--green); }
+.s-locked   { background:var(--red-dim); color:var(--red); }
+.s-review   { background:var(--amber-dim); color:var(--amber); }
+.s-approved { background:var(--blue-dim); color:var(--blue); }
+
+.row-acts { display:flex; align-items:center; gap:2px; opacity:0; transition:opacity 0.12s; }
+.ft tbody tr:hover .row-acts { opacity:1; }
+
+.mini-av {
+  width:22px; height:22px; border-radius:50%;
+  font-size:9px; font-weight:700; color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* ═══════════════════════════ LOADING ROW ═══════════════════════════ */
+.loading-row td { text-align:center; padding:40px; color:var(--tx-3); font-size:13px; }
+.spinner { display:inline-block; width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:8px; }
+
+/* ═══════════════════════════ DASHBOARD GRID ═══════════════════════════ */
+.dash-grid { display:grid; grid-template-columns:1fr 340px; gap:18px; margin-top:18px; }
+.dash-col { display:flex; flex-direction:column; gap:18px; }
+
+.act-item { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); }
+.act-item:last-child { border-bottom:none; }
+.act-icon-box { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ai-up   { background:var(--blue-dim); color:var(--blue); }
+.ai-co   { background:var(--amber-dim); color:var(--amber); }
+.ai-ci   { background:var(--green-dim); color:var(--green); }
+.ai-ap   { background:var(--purple-dim); color:var(--purple); }
+.ai-del  { background:var(--red-dim); color:var(--red); }
+.act-text { font-size:12.5px; color:var(--tx-1); line-height:1.5; }
+.act-time { font-size:11px; color:var(--tx-3); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
+
+/* ═══════════════════════════ USER CARDS ═══════════════════════════ */
+.users-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.u-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:18px; box-shadow:var(--sh-sm); transition:box-shadow 0.2s; }
+.u-card:hover { box-shadow:var(--sh); }
+.u-av { width:42px; height:42px; border-radius:50%; font-size:15px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+.u-av img { width:42px; height:42px; border-radius:50%; object-fit:cover; }
+.u-name { font-size:13.5px; font-weight:600; margin-bottom:2px; }
+.u-email { font-size:11.5px; color:var(--tx-3); margin-bottom:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.role-pill { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:20px; }
+.r-admin  { background:var(--purple-dim); color:var(--purple); }
+.r-lead   { background:var(--amber-dim); color:var(--amber); }
+.r-eng    { background:var(--blue-dim); color:var(--blue); }
+.r-view   { background:var(--surface-3); color:var(--tx-2); }
+.u-stats { display:flex; gap:14px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.u-stat { text-align:center; }
+.u-stat-v { font-size:15px; font-weight:700; }
+.u-stat-l { font-size:10px; color:var(--tx-3); text-transform:uppercase; letter-spacing:0.04em; }
+
+/* ═══════════════════════════ PANEL ═══════════════════════════ */
+.panel-ov {
+  position:fixed; inset:0; background:rgba(13,17,23,0.35);
+  backdrop-filter:blur(3px); z-index:100;
+  display:none; align-items:flex-start; justify-content:flex-end;
+}
+.panel-ov.open { display:flex; animation:fadeIn 0.18s; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.side-panel {
+  width:460px; height:100vh; background:var(--surface);
+  box-shadow:var(--sh-lg); display:flex; flex-direction:column;
+  animation:slideIn 0.22s cubic-bezier(0.4,0,0.2,1); overflow:hidden;
+}
+@keyframes slideIn { from{transform:translateX(100%)} to{transform:translateX(0)} }
+.panel-hd { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; }
+.panel-title { font-family:'Barlow',sans-serif; font-size:15px; font-weight:700; margin-bottom:3px; }
+.panel-meta { font-size:11.5px; color:var(--tx-3); font-family:'IBM Plex Mono',monospace; }
+.panel-close { width:26px; height:26px; border-radius:6px; border:none; background:var(--surface-2); cursor:pointer; color:var(--tx-3); display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
+.panel-close:hover { background:var(--border); color:var(--tx-1); }
+.panel-tabs { display:flex; padding:0 22px; border-bottom:1px solid var(--border); }
+.ptab { padding:11px 0; margin-right:22px; font-size:12.5px; font-weight:600; color:var(--tx-3); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.12s; }
+.ptab.on { color:var(--blue); border-bottom-color:var(--blue); }
+.panel-body { flex:1; overflow-y:auto; padding:18px 22px; }
+
+.ver-item { display:flex; gap:12px; padding:14px 0; border-bottom:1px solid var(--border); position:relative; }
+.ver-item:last-child { border-bottom:none; }
+.ver-line { position:absolute; left:11px; top:34px; bottom:-14px; width:1px; background:var(--border); }
+.ver-item:last-child .ver-line { display:none; }
+.ver-dot { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:9.5px; font-weight:700; position:relative; z-index:1; }
+.vd-cur { background:var(--blue); color:#fff; }
+.vd-old { background:var(--surface-3); color:var(--tx-3); border:1.5px solid var(--border); }
+.ver-body { flex:1; }
+.ver-top { display:flex; align-items:center; gap:7px; margin-bottom:4px; }
+.ver-num { font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500; }
+.vtag { font-size:10px; font-weight:600; padding:1px 6px; border-radius:3px; }
+.vt-cur { background:var(--blue-dim); color:var(--blue); }
+.vt-rel { background:var(--green-dim); color:var(--green); }
+.vt-drft { background:var(--amber-dim); color:var(--amber); }
+.ver-note { font-size:12.5px; color:var(--tx-1); margin-bottom:5px; line-height:1.5; }
+.ver-meta { font-size:11px; color:var(--tx-3); display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; }
+.ver-acts { display:flex; gap:6px; margin-top:8px; }
+
+/* ═══════════════════════════ MODAL ═══════════════════════════ */
+.modal-ov {
+  position:fixed; inset:0; background:rgba(13,17,23,0.45);
+  backdrop-filter:blur(4px); z-index:200;
+  display:none; align-items:center; justify-content:center;
+}
+.modal-ov.open { display:flex; animation:fadeIn 0.15s; }
+.modal {
+  background:var(--surface); border-radius:var(--r-lg); width:500px; max-width:92vw;
+  box-shadow:var(--sh-lg); animation:modalIn 0.18s cubic-bezier(0.4,0,0.2,1); overflow:hidden;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(0.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-hd { padding:22px 26px 18px; border-bottom:1px solid var(--border); }
+.modal-title { font-family:'Barlow',sans-serif; font-size:16px; font-weight:700; margin-bottom:4px; }
+.modal-sub { font-size:12.5px; color:var(--tx-3); }
+.modal-body { padding:22px 26px; }
+.modal-foot { padding:14px 26px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+
+.form-g { margin-bottom:16px; }
+.form-lbl { display:block; font-size:12px; font-weight:600; color:var(--tx-2); margin-bottom:6px; }
+.form-inp, .form-sel, .form-ta {
+  width:100%; padding:8px 12px; border:1px solid var(--border);
+  border-radius:var(--r-sm); font-size:13px; font-family:'IBM Plex Sans',sans-serif;
+  color:var(--tx-1); background:var(--surface); outline:none; transition:all 0.12s;
+}
+.form-inp:focus, .form-sel:focus, .form-ta:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(21,87,255,0.1); }
+.form-ta { resize:vertical; min-height:76px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.dz {
+  border:2px dashed var(--border); border-radius:var(--r);
+  padding:28px 20px; text-align:center; cursor:pointer; transition:all 0.15s;
+}
+.dz:hover { border-color:var(--blue); background:var(--blue-dim); }
+.dz.dragging { border-color:var(--blue); background:var(--blue-dim); }
+.dz-icon { width:38px; height:38px; margin:0 auto 10px; color:var(--tx-3); }
+.dz-text { font-size:13px; color:var(--tx-2); }
+.dz-sub { font-size:11.5px; color:var(--tx-3); margin-top:3px; }
+#file-input { display:none; }
+.upload-list { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+.upload-item { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--surface-2); border-radius:6px; font-size:12.5px; }
+.upload-prog { height:3px; background:var(--border); border-radius:2px; overflow:hidden; flex:1; }
+.upload-prog-fill { height:100%; background:var(--blue); border-radius:2px; transition:width 0.3s; }
+
+/* ═══════════════════════════ PERM TABLE ═══════════════════════════ */
+.perm-table { width:100%; border-collapse:collapse; }
+.perm-table th { text-align:center; padding:10px 12px; font-size:11px; font-weight:600; color:var(--tx-3); text-transform:uppercase; letter-spacing:0.07em; background:var(--bg); border-bottom:1px solid var(--border); }
+.perm-table th:first-child { text-align:left; }
+.perm-table td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; text-align:center; }
+.perm-table td:first-child { text-align:left; font-weight:500; }
+.perm-table tr:last-child td { border-bottom:none; }
+.perm-yes { color:var(--green); font-weight:700; font-size:15px; }
+.perm-no { color:var(--border-2); font-size:15px; }
+
+/* ═══════════════════════════ TOAST ═══════════════════════════ */
+#toast-wrap { position:fixed; bottom:22px; right:22px; z-index:300; display:flex; flex-direction:column; gap:7px; }
+.toast {
+  display:flex; align-items:center; gap:9px;
+  background:var(--tx-1); color:#fff;
+  padding:11px 16px; border-radius:var(--r); font-size:12.5px; font-weight:500;
+  box-shadow:var(--sh-lg); animation:toastIn 0.22s ease;
+  min-width:270px; max-width:360px;
+}
+@keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.toast.ok  { background:var(--green); }
+.toast.err { background:var(--red); }
+.toast.warn{ background:var(--amber); }
+
+/* ═══════════════════════════ MISC ═══════════════════════════ */
+.tag { display:inline-flex; align-items:center; font-size:10.5px; font-weight:600; padding:2px 7px; border-radius:4px; }
+.tg-mech { background:var(--purple-dim); color:var(--purple); }
+.tg-hvac { background:var(--amber-dim); color:var(--amber); }
+.tg-elec { background:var(--blue-dim); color:var(--blue); }
+.tg-doc  { background:var(--green-dim); color:var(--green); }
+
+.empty-state { text-align:center; padding:60px 20px; }
+.empty-icon { width:44px; height:44px; margin:0 auto 14px; opacity:0.3; }
+.empty-title { font-size:14.5px; font-weight:600; color:var(--tx-2); margin-bottom:5px; }
+.empty-sub { font-size:12.5px; color:var(--tx-3); }
+
+@media (max-width:1200px) {
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .users-grid { grid-template-columns:repeat(2,1fr); }
+  .dash-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12M12 4v16M4 12h16"/></svg>
+    </div>
+    <div class="login-title">STARDUCT <em>VAULT</em></div>
+    <div class="login-sub">Engineering Document Management System</div>
+
+    <button class="btn-google" onclick="signIn()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Đăng nhập bằng Google
+    </button>
+    <div class="login-status" id="login-status">Sử dụng tài khoản @nsca.vn của bạn</div>
+    <div class="login-divider"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.2);line-height:1.6;">
+      Dữ liệu được lưu trữ trên Google Drive của bạn.<br>
+      STARDUCT VAULT không lưu trữ file trên server riêng.
+    </div>
+    <div class="login-version">STARDUCT VAULT · v2.0 · Google Drive API</div>
+  </div>
+</div>
+
+<!-- ══════════════ APP SHELL ══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12M12 4v16M4 12h16"/></svg>
+      </div>
+      <div>
+        <div class="sb-logo-text">STARDUCT <em>VAULT</em></div>
+        <div class="sb-logo-ver">v2.0 · DRIVE API</div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Workspace</div>
+      <div class="sb-item active" onclick="showView('dashboard',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="sb-item" onclick="showView('files',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        File Repository
+        <span class="sb-badge" id="sb-total">—</span>
+      </div>
+      <div class="sb-item" onclick="showView('locked',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Checked Out
+        <span class="sb-badge warn" id="sb-locked">—</span>
+      </div>
+      <div class="sb-item" onclick="showView('review',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Pending Review
+        <span class="sb-badge red" id="sb-review">—</span>
+      </div>
+      <div class="sb-item" onclick="showView('activity',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Activity Log
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Projects</div>
+    </div>
+    <div class="sb-projects" id="sb-projects">
+      <div class="sb-proj-item" onclick="filterByProject('SVAV-S')">
+        <div class="sb-proj-dot" style="background:#1557FF"></div>SVAV-S Series
+      </div>
+      <div class="sb-proj-item" onclick="filterByProject('Duct')">
+        <div class="sb-proj-dot" style="background:#0F8C5A"></div>Duct Assembly
+      </div>
+      <div class="sb-proj-item" onclick="filterByProject('FCU')">
+        <div class="sb-proj-dot" style="background:#C07000"></div>Fan Coil Units
+      </div>
+      <div class="sb-proj-item" onclick="filterByProject('Control')">
+        <div class="sb-proj-dot" style="background:#6E3EBB"></div>Control Panels
+      </div>
+      <div class="sb-proj-item" onclick="openModal('newProject')">
+        <div class="sb-proj-dot" style="background:var(--border-2)"></div>
+        <span style="color:rgba(255,255,255,0.3)">+ New Project</span>
+      </div>
+    </div>
+
+    <div class="sb-storage">
+      <div class="sb-storage-label"><span>Google Drive</span><span id="drive-pct">—</span></div>
+      <div class="sb-storage-bar"><div class="sb-storage-fill" id="drive-bar" style="width:0%"></div></div>
+      <div class="sb-storage-info" id="drive-info">Connecting…</div>
+    </div>
+
+    <div class="sb-section" style="padding-bottom:0">
+      <div class="sb-section-label">Admin</div>
+      <div class="sb-item" onclick="showView('users',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        User Management
+      </div>
+      <div class="sb-item" onclick="showView('settings',this)">
+        <svg class="sb-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+
+    <div class="sb-user" onclick="showView('settings',null)">
+      <div class="sb-avatar" id="sb-av">?</div>
+      <div style="flex:1;min-width:0">
+        <div class="sb-user-name" id="sb-uname">—</div>
+        <div class="sb-user-role" id="sb-urole">Administrator</div>
+      </div>
+      <div class="sb-logout" onclick="event.stopPropagation();signOut()" title="Đăng xuất">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="sync-pill" id="sync-pill" onclick="syncDrive()">
+          <div class="sync-dot"></div>
+          <span id="sync-text">Synced</span>
+        </div>
+        <div class="search-wrap">
+          <svg width="13" height="13" fill="none" stroke="var(--tx-3)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Tìm file, project…" oninput="searchFiles(this.value)">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('upload')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          Upload
+        </button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-hd">
+          <div>
+            <div class="page-title" id="dash-greeting">Xin chào!</div>
+            <div class="page-sub">Tổng quan STARDUCT VAULT hôm nay</div>
+          </div>
+          <div style="font-size:12px;color:var(--tx-3);font-family:'IBM Plex Mono',monospace" id="dash-date"></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-ico" style="background:var(--blue-dim)"><svg width="16" height="16" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg></div>
+            <div class="stat-lbl">Tổng Files</div>
+            <div class="stat-val" id="stat-total">—</div>
+            <div class="stat-note up" id="stat-total-note">Đang tải…</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-ico" style="background:var(--amber-dim)"><svg width="16" height="16" fill="none" stroke="var(--amber)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+            <div class="stat-lbl">Đang Checked Out</div>
+            <div class="stat-val" id="stat-locked">—</div>
+            <div class="stat-note warn" id="stat-locked-note">—</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-ico" style="background:var(--green-dim)"><svg width="16" height="16" fill="none" stroke="var(--green)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"/></svg></div>
+            <div class="stat-lbl">Drive Storage</div>
+            <div class="stat-val" id="stat-storage">—</div>
+            <div class="stat-note" id="stat-storage-note">—</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-ico" style="background:var(--red-dim)"><svg width="16" height="16" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div class="stat-lbl">Chờ Duyệt</div>
+            <div class="stat-val" id="stat-review">—</div>
+            <div class="stat-note err" id="stat-review-note">—</div>
+          </div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-col">
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">Files gần đây</div>
+                <button class="btn btn-secondary btn-sm" onclick="showView('files',null)">Xem tất cả</button>
+              </div>
+              <div id="dash-recent-files">
+                <div class="loading-row"><td colspan="4"><span class="spinner"></span>Đang tải từ Google Drive…</td></div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-col">
+            <div class="card">
+              <div class="card-head"><div class="card-title">🔒 Đang bị lock</div></div>
+              <div style="padding:12px 16px" id="dash-locked-list">
+                <div style="text-align:center;padding:20px;color:var(--tx-3);font-size:12.5px">Đang tải…</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title">Thao tác nhanh</div></div>
+              <div style="padding:12px 16px;display:flex;flex-direction:column;gap:7px">
+                <button class="btn btn-secondary" style="justify-content:flex-start;width:100%;gap:10px" onclick="openModal('upload')">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload file mới
+                </button>
+                <button class="btn btn-secondary" style="justify-content:flex-start;width:100%;gap:10px" onclick="showView('review',null)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Xem pending review
+                </button>
+                <button class="btn btn-secondary" style="justify-content:flex-start;width:100%;gap:10px" onclick="syncDrive()">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>Sync Google Drive
+                </button>
+                <button class="btn btn-secondary" style="justify-content:flex-start;width:100%;gap:10px" onclick="openDriveFolder()">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>Mở Drive Folder
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FILES ── -->
+      <div class="view" id="view-files">
+        <div class="page-hd">
+          <div>
+            <div class="page-title">File Repository</div>
+            <div class="page-sub" id="files-sub">Đang tải…</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary" onclick="syncDrive()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>Sync
+            </button>
+            <button class="btn btn-primary" onclick="openModal('upload')">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="file-bar">
+            <div class="path-crumb"><a>VAULT</a><span style="color:var(--border-2)">/</span><span>STARDUCT_VAULT</span></div>
+            <div class="filter-chip on" onclick="filterType('all',this)">Tất cả</div>
+            <div class="filter-chip" onclick="filterType('cad',this)">CAD / 3D</div>
+            <div class="filter-chip" onclick="filterType('pdf',this)">PDF</div>
+            <div class="filter-chip" onclick="filterType('xls',this)">Excel</div>
+            <div class="filter-chip" onclick="filterType('doc',this)">Word / PPT</div>
+          </div>
+          <div id="file-table-wrap">
+            <table class="ft" id="main-ft">
+              <thead>
+                <tr>
+                  <th style="width:34px"></th>
+                  <th>Tên File</th>
+                  <th>Phiên bản</th>
+                  <th>Trạng thái</th>
+                  <th>Loại</th>
+                  <th>Người sở hữu</th>
+                  <th>Cập nhật</th>
+                  <th style="width:90px"></th>
+                </tr>
+              </thead>
+              <tbody id="file-tbody">
+                <tr class="loading-row"><td colspan="8"><span class="spinner"></span>Đang tải files từ Google Drive…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LOCKED ── -->
+      <div class="view" id="view-locked">
+        <div class="page-hd">
+          <div><div class="page-title">Checked Out Files</div><div class="page-sub" id="locked-sub">Các file đang bị lock</div></div>
+        </div>
+        <div class="card">
+          <table class="ft">
+            <thead><tr><th>File</th><th>Locked By</th><th>Thời điểm</th><th>Thời gian</th><th>Thao tác</th></tr></thead>
+            <tbody id="locked-tbody">
+              <tr class="loading-row"><td colspan="5"><span class="spinner"></span>Đang kiểm tra…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── REVIEW ── -->
+      <div class="view" id="view-review">
+        <div class="page-hd">
+          <div><div class="page-title">Pending Review</div><div class="page-sub">Files chờ phê duyệt</div></div>
+        </div>
+        <div class="card">
+          <table class="ft">
+            <thead><tr><th>File</th><th>Phiên bản</th><th>Người gửi</th><th>Ngày gửi</th><th>Ghi chú</th><th>Thao tác</th></tr></thead>
+            <tbody id="review-tbody">
+              <tr class="loading-row"><td colspan="6"><span class="spinner"></span>Đang kiểm tra…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ACTIVITY ── -->
+      <div class="view" id="view-activity">
+        <div class="page-hd">
+          <div><div class="page-title">Activity Log</div><div class="page-sub">Toàn bộ lịch sử thao tác</div></div>
+          <button class="btn btn-secondary" onclick="toast('Đang xuất log…','ok')">Xuất Excel</button>
+        </div>
+        <div class="card">
+          <div style="padding:0 20px" id="activity-list">
+            <div style="text-align:center;padding:40px;color:var(--tx-3)">Đang tải…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── USERS ── -->
+      <div class="view" id="view-users">
+        <div class="page-hd">
+          <div><div class="page-title">User Management</div><div class="page-sub">Phân quyền truy cập STARDUCT VAULT</div></div>
+          <button class="btn btn-primary" onclick="openModal('newUser')">+ Thêm User</button>
+        </div>
+        <div class="card" style="margin-bottom:22px">
+          <div class="card-head"><div class="card-title">Ma trận phân quyền</div></div>
+          <table class="perm-table">
+            <thead><tr><th>Quyền</th><th><span class="role-pill r-admin">Admin</span></th><th><span class="role-pill r-lead">Lead Eng.</span></th><th><span class="role-pill r-eng">Engineer</span></th><th><span class="role-pill r-view">Viewer</span></th></tr></thead>
+            <tbody>
+              <tr><td>Xem & Download file</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td></tr>
+              <tr><td>Upload / Check-in</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-no">✗</td></tr>
+              <tr><td>Check-out (Lock)</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-no">✗</td></tr>
+              <tr><td>Approve / Release</td><td class="perm-yes">✓</td><td class="perm-yes">✓</td><td class="perm-no">✗</td><td class="perm-no">✗</td></tr>
+              <tr><td>Force Unlock</td><td class="perm-yes">✓</td><td class="perm-no">✗</td><td class="perm-no">✗</td><td class="perm-no">✗</td></tr>
+              <tr><td>Xóa file</td><td class="perm-yes">✓</td><td class="perm-no">✗</td><td class="perm-no">✗</td><td class="perm-no">✗</td></tr>
+              <tr><td>Quản lý Users</td><td class="perm-yes">✓</td><td class="perm-no">✗</td><td class="perm-no">✗</td><td class="perm-no">✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="users-grid" id="users-grid">
+          <div style="text-align:center;padding:40px;color:var(--tx-3);grid-column:1/-1">Đăng nhập để xem users</div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="view" id="view-settings">
+        <div class="page-hd">
+          <div><div class="page-title">Settings</div><div class="page-sub">Cấu hình hệ thống STARDUCT VAULT</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Google Drive Integration</div></div>
+            <div style="padding:18px">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--green-dim);border-radius:8px;margin-bottom:16px" id="drive-status-box">
+                <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--green)" id="drive-conn-status">Đang kết nối…</div>
+                  <div style="font-size:11.5px;color:var(--tx-3)" id="drive-conn-email">—</div>
+                </div>
+              </div>
+              <div class="form-g"><label class="form-lbl">Vault Root Folder ID</label><input class="form-inp" id="setting-folder-id" value="" readonly></div>
+              <div class="form-g"><label class="form-lbl">Auto-sync</label>
+                <select class="form-sel"><option>Mỗi 5 phút</option><option selected>Mỗi 15 phút</option><option>Mỗi 30 phút</option><option>Thủ công</option></select>
+              </div>
+              <button class="btn btn-primary" onclick="syncDrive()">Sync Now</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Vault Policies</div></div>
+            <div style="padding:18px">
+              <div class="form-g"><label class="form-lbl">Thời gian checkout tối đa (ngày)</label><input class="form-inp" type="number" value="3"></div>
+              <div class="form-g"><label class="form-lbl">Giữ tối đa N phiên bản / file</label><input class="form-inp" type="number" value="20"></div>
+              <div class="form-g"><label class="form-lbl">Loại file cho phép</label><input class="form-inp" value=".step,.stp,.dwg,.dxf,.pdf,.xlsx,.docx,.pptx,.iges"></div>
+              <div class="form-g"><label class="form-lbl">Dung lượng file tối đa</label>
+                <select class="form-sel"><option>50 MB</option><option selected>200 MB</option><option>500 MB</option></select>
+              </div>
+              <button class="btn btn-primary" onclick="toast('Đã lưu cấu hình!','ok')">Lưu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end content -->
+  </div><!-- end main -->
+</div><!-- end app -->
+
+<!-- ═══ VERSION PANEL ═══ -->
+<div class="panel-ov" id="panel-ov" onclick="if(event.target===this)closePanel()">
+  <div class="side-panel">
+    <div class="panel-hd">
+      <div>
+        <div class="panel-title" id="panel-fname">—</div>
+        <div class="panel-meta" id="panel-fmeta">—</div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-tabs">
+      <div class="ptab on" onclick="switchTab('history',this)">Version History</div>
+      <div class="ptab" onclick="switchTab('props',this)">Properties</div>
+      <div class="ptab" onclick="switchTab('access',this)">Access Log</div>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+  </div>
+</div>
+
+<!-- ═══ UPLOAD MODAL ═══ -->
+<div class="modal-ov" id="modal-upload">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title">Upload Files lên Vault</div>
+      <div class="modal-sub">File sẽ được version hóa và đồng bộ lên Google Drive</div>
+    </div>
+    <div class="modal-body">
+      <div class="dz" id="dz" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('dragging')" ondragleave="this.classList.remove('dragging')" ondrop="handleDrop(event)">
+        <div class="dz-icon"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
+        <div class="dz-text">Kéo thả file vào đây hoặc <span style="color:var(--blue);font-weight:600">chọn file</span></div>
+        <div class="dz-sub">STEP, STP, DWG, DXF, PDF, XLSX, DOCX, PPTX · Tối đa 200MB</div>
+      </div>
+      <input type="file" id="file-input" multiple accept=".step,.stp,.dwg,.dxf,.iges,.pdf,.xlsx,.xls,.docx,.doc,.pptx,.ppt" onchange="handleFileSelect(this.files)">
+      <div class="upload-list" id="upload-list"></div>
+      <div style="margin-top:14px">
+        <div class="form-g">
+          <label class="form-lbl">Project</label>
+          <select class="form-sel" id="up-project"><option>SVAV-S Series</option><option>Duct Assembly</option><option>Fan Coil Units</option><option>Control Panels</option></select>
+        </div>
+        <div class="form-g">
+          <label class="form-lbl">Ghi chú phiên bản</label>
+          <textarea class="form-ta" id="up-note" placeholder="Mô tả thay đổi trong phiên bản này…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-upload')">Hủy</button>
+      <button class="btn btn-primary" id="btn-upload" onclick="doUpload()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Upload lên Drive
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEW USER MODAL ═══ -->
+<div class="modal-ov" id="modal-newUser">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title">Thêm User mới</div><div class="modal-sub">User sẽ nhận email mời vào STARDUCT VAULT</div></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-g"><label class="form-lbl">Họ</label><input class="form-inp" id="nu-fn" placeholder="Nguyễn"></div>
+        <div class="form-g"><label class="form-lbl">Tên</label><input class="form-inp" id="nu-ln" placeholder="Tuấn"></div>
+      </div>
+      <div class="form-g"><label class="form-lbl">Email</label><input class="form-inp" id="nu-email" type="email" placeholder="user@nsca.vn"></div>
+      <div class="form-g"><label class="form-lbl">Vai trò</label>
+        <select class="form-sel" id="nu-role">
+          <option value="engineer">Engineer — Upload, check-out, check-in</option>
+          <option value="lead">Lead Engineer — Thêm quyền approve</option>
+          <option value="viewer">Viewer — Chỉ xem & download</option>
+          <option value="admin">Administrator — Toàn quyền</option>
+        </select>
+      </div>
+      <div class="form-g"><label class="form-lbl">Phòng ban</label>
+        <select class="form-sel"><option>Cơ khí / CAD</option><option>HVAC Engineering</option><option>Điện</option><option>Ban lãnh đạo</option><option>QA / Testing</option></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-newUser')">Hủy</button>
+      <button class="btn btn-primary" onclick="inviteUser()">Gửi lời mời</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEW PROJECT MODAL ═══ -->
+<div class="modal-ov" id="modal-newProject">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title">Tạo Project mới</div></div>
+    <div class="modal-body">
+      <div class="form-g"><label class="form-lbl">Tên Project</label><input class="form-inp" id="np-name" placeholder="VD: SVAV-L Series"></div>
+      <div class="form-g"><label class="form-lbl">Mô tả</label><textarea class="form-ta" id="np-desc" placeholder="Mô tả ngắn…"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-newProject')">Hủy</button>
+      <button class="btn btn-primary" onclick="createProject()">Tạo Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-wrap"></div>
+
+<!-- ═══════════════════════════ SCRIPT ═══════════════════════════ -->
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+// ║           STARDUCT VAULT — Google Drive API Core            ║
+// ║  Thay CLIENT_ID bằng Client ID từ Google Cloud Console      ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+const CLIENT_ID   = '702472763408-m4im18v9d8dehjk7m033rpojaaa2os9e.apps.googleusercontent.com';
+const SCOPES      = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata';
+const VAULT_NAME  = 'STARDUCT_VAULT';
+const VAULT_VER   = 'v2.0';
+
+// State
+let accessToken   = null;
+let currentUser   = null;
+let vaultFolderId = null;
+let allFiles      = [];
+let pendingFiles  = [];
+let activityLog   = [];
+let currentFileForPanel = null;
+let tokenClient   = null;
+
+// ─── GOOGLE SIGN IN ────────────────────────────────────────────
+window.onGoogleLibraryLoad = function() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: handleTokenResponse,
+  });
+};
+
+function signIn() {
+  const st = document.getElementById('login-status');
+  st.textContent = 'Đang kết nối…';
+  st.className = 'login-status loading';
+  if (!tokenClient) {
+    setTimeout(signIn, 500); return;
+  }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+async function handleTokenResponse(resp) {
+  if (resp.error) {
+    const st = document.getElementById('login-status');
+    st.textContent = 'Lỗi đăng nhập: ' + resp.error;
+    st.className = 'login-status error';
+    return;
+  }
+  accessToken = resp.access_token;
+  await loadUserInfo();
+  await initVault();
+  showApp();
+}
+
+async function loadUserInfo() {
+  const r = await gFetch('https://www.googleapis.com/oauth2/v2/userinfo');
+  currentUser = r;
+  document.getElementById('sb-uname').textContent = r.name || r.email;
+  document.getElementById('sb-urole').textContent = 'Administrator';
+  const av = document.getElementById('sb-av');
+  if (r.picture) {
+    av.innerHTML = `<img src="${r.picture}" alt="${r.name}">`;
+  } else {
+    av.textContent = (r.name||'?')[0].toUpperCase();
+  }
+  document.getElementById('drive-conn-status').textContent = 'Đã kết nối Google Drive';
+  document.getElementById('drive-conn-email').textContent = r.email;
+  document.getElementById('dash-greeting').textContent = `Xin chào, ${r.given_name || r.name}! 👋`;
+  const d = new Date();
+  document.getElementById('dash-date').textContent = d.toLocaleDateString('vi-VN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  toast('STARDUCT VAULT đã kết nối Google Drive ✓', 'ok');
+}
+
+function signOut() {
+  google.accounts.oauth2.revoke(accessToken, () => {
+    accessToken = null; currentUser = null; vaultFolderId = null; allFiles = [];
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('login-status').textContent = 'Sử dụng tài khoản @nsca.vn của bạn';
+    document.getElementById('login-status').className = 'login-status';
+  });
+}
+
+// ─── VAULT INIT ────────────────────────────────────────────────
+async function initVault() {
+  setSyncStatus('syncing', 'Đang khởi tạo…');
+  try {
+    // Tìm hoặc tạo thư mục STARDUCT_VAULT
+    const q = encodeURIComponent(`name='${VAULT_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const res = await gFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
+    if (res.files && res.files.length > 0) {
+      vaultFolderId = res.files[0].id;
+    } else {
+      const folder = await gFetch('https://www.googleapis.com/drive/v3/files', 'POST', {
+        name: VAULT_NAME,
+        mimeType: 'application/vnd.google-apps.folder',
+        description: `STARDUCT VAULT ${VAULT_VER} - Engineering Document Management`
+      });
+      vaultFolderId = folder.id;
+      toast('Đã tạo thư mục STARDUCT_VAULT trên Drive ✓', 'ok');
+    }
+    document.getElementById('setting-folder-id').value = vaultFolderId;
+    await loadAllFiles();
+    await loadDriveStorage();
+    setSyncStatus('ok', 'Synced');
+  } catch(e) {
+    setSyncStatus('error', 'Lỗi kết nối');
+    toast('Lỗi khởi tạo Vault: ' + e.message, 'err');
+  }
+}
+
+// ─── LOAD FILES ────────────────────────────────────────────────
+async function loadAllFiles() {
+  if (!vaultFolderId) return;
+  setSyncStatus('syncing', 'Đang tải…');
+  try {
+    const q = encodeURIComponent(`'${vaultFolderId}' in parents and trashed=false`);
+    const fields = 'files(id,name,size,mimeType,modifiedTime,createdTime,owners,appProperties,description)';
+    const res = await gFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=${fields}&orderBy=modifiedTime desc&pageSize=100`);
+    allFiles = res.files || [];
+    renderFileTable(allFiles);
+    updateStats();
+    renderDashRecent();
+    renderLockedList();
+    renderReviewTable();
+    renderActivityLog();
+    setSyncStatus('ok', 'Synced');
+  } catch(e) {
+    setSyncStatus('error', 'Lỗi');
+    toast('Lỗi tải files: ' + e.message, 'err');
+  }
+}
+
+async function loadDriveStorage() {
+  try {
+    const r = await gFetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota');
+    const q = r.storageQuota;
+    const used = parseInt(q.usage||0);
+    const total = parseInt(q.limit||0);
+    const pct = total ? Math.round(used/total*100) : 0;
+    const fmtGB = b => b > 1e9 ? (b/1e9).toFixed(1)+' GB' : b > 1e6 ? (b/1e6).toFixed(0)+' MB' : b+' B';
+    document.getElementById('drive-pct').textContent = pct+'%';
+    document.getElementById('drive-bar').style.width = pct+'%';
+    document.getElementById('drive-info').textContent = `${fmtGB(used)} / ${total ? fmtGB(total) : '∞'} đã dùng`;
+    document.getElementById('stat-storage').textContent = fmtGB(used);
+    document.getElementById('stat-storage-note').textContent = total ? `${pct}% của ${fmtGB(total)}` : 'Không giới hạn';
+  } catch(e) {}
+}
+
+// ─── RENDER FILES ──────────────────────────────────────────────
+function getFileType(name, mime) {
+  const ext = (name||'').split('.').pop().toLowerCase();
+  if (['step','stp','iges'].includes(ext)) return {cls:'fi-stp', lbl:'STP'};
+  if (['dwg','dxf'].includes(ext)) return {cls:'fi-cad', lbl:'DWG'};
+  if (ext==='pdf') return {cls:'fi-pdf', lbl:'PDF'};
+  if (['xlsx','xls','csv'].includes(ext)) return {cls:'fi-xls', lbl:'XLS'};
+  if (['docx','doc'].includes(ext)) return {cls:'fi-doc', lbl:'DOC'};
+  if (['pptx','ppt'].includes(ext)) return {cls:'fi-ppt', lbl:'PPT'};
+  if (mime && mime.includes('folder')) return {cls:'fi-fld', lbl:'📁'};
+  return {cls:'fi-doc', lbl:ext.toUpperCase().slice(0,3)||'FIL'};
+}
+
+function getStatusBadge(ap) {
+  if (!ap) return '<span class="s-badge s-free">Free</span>';
+  const s = ap.vaultStatus || 'free';
+  const map = { free:'s-free', locked:'s-locked', review:'s-review', approved:'s-approved' };
+  const lbl = { free:'Free', locked:'Locked', review:'In Review', approved:'Approved' };
+  return `<span class="s-badge ${map[s]||'s-free'}">${lbl[s]||s}</span>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'Vừa xong';
+  if (diff < 3600) return Math.floor(diff/60) + ' phút trước';
+  if (diff < 86400) return Math.floor(diff/3600) + ' giờ trước';
+  return d.toLocaleDateString('vi-VN');
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  bytes = parseInt(bytes);
+  if (bytes > 1e9) return (bytes/1e9).toFixed(1)+' GB';
+  if (bytes > 1e6) return (bytes/1e6).toFixed(1)+' MB';
+  if (bytes > 1e3) return (bytes/1e3).toFixed(0)+' KB';
+  return bytes+' B';
+}
+
+function renderFileTable(files) {
+  const tbody = document.getElementById('file-tbody');
+  document.getElementById('files-sub').textContent = `${files.length} files trong STARDUCT_VAULT`;
+  if (!files.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-title">Chưa có file nào</div><div class="empty-sub">Upload file đầu tiên vào Vault</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = files.map(f => {
+    const ft = getFileType(f.name, f.mimeType);
+    const ap = f.appProperties || {};
+    const ver = ap.vaultVersion || 'v1.0';
+    const isLatest = !ap.vaultOlder;
+    const owner = f.owners?.[0]?.displayName || '—';
+    const ownerInit = owner.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const colors = ['#1557FF','#0F8C5A','#C07000','#6E3EBB','#D92B2B'];
+    const ci = Math.abs(owner.charCodeAt(0)) % colors.length;
+    return `<tr onclick="openPanel('${f.id}')" data-id="${f.id}" data-name="${f.name}" data-type="${ft.lbl.toLowerCase()}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" style="accent-color:var(--blue)"></td>
+      <td><div class="f-cell">
+        <div class="f-icon ${ft.cls}">${ft.lbl}</div>
+        <div><div class="f-name">${f.name}</div><div class="f-desc">${fmtSize(f.size)} · ${f.description||ap.vaultProject||'STARDUCT_VAULT'}</div></div>
+      </div></td>
+      <td><span class="ver-tag ${isLatest?'cur':''}">${ver}</span></td>
+      <td>${getStatusBadge(ap)}</td>
+      <td><span class="tag tg-mech">${ap.vaultProject||'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div class="mini-av" style="background:${colors[ci]}">${ownerInit}</div>
+        <span style="font-size:12px;color:var(--tx-2)">${owner}</span>
+      </div></td>
+      <td style="font-size:12px;color:var(--tx-3);font-family:'IBM Plex Mono',monospace">${fmtDate(f.modifiedTime)}</td>
+      <td onclick="event.stopPropagation()"><div class="row-acts">
+        ${ap.vaultStatus==='locked' && ap.vaultCheckoutBy!==currentUser?.email
+          ? `<button class="btn btn-icon" title="Locked by ${ap.vaultCheckoutBy||'someone'}" onclick="void(0)"><svg width="13" height="13" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></button>`
+          : `<button class="btn btn-icon" title="Check Out" onclick="checkoutFile('${f.id}','${f.name}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v-3m0 0V9m0 3H9m3 0h3"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg></button>`
+        }
+        <button class="btn btn-icon" title="Version History" onclick="event.stopPropagation();openPanel('${f.id}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+        <button class="btn btn-icon" title="Download" onclick="event.stopPropagation();downloadFile('${f.id}','${f.name}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── STATS ─────────────────────────────────────────────────────
+function updateStats() {
+  const locked = allFiles.filter(f => f.appProperties?.vaultStatus === 'locked');
+  const review = allFiles.filter(f => f.appProperties?.vaultStatus === 'review');
+  document.getElementById('stat-total').textContent = allFiles.length;
+  document.getElementById('stat-total-note').textContent = '↑ từ Google Drive';
+  document.getElementById('stat-locked').textContent = locked.length;
+  document.getElementById('stat-locked-note').textContent = locked.length ? `${locked.length} file đang bị lock` : 'Không có file bị lock';
+  document.getElementById('stat-review').textContent = review.length;
+  document.getElementById('stat-review-note').textContent = review.length ? `${review.length} chờ duyệt` : 'Không có file chờ';
+  document.getElementById('sb-total').textContent = allFiles.length;
+  document.getElementById('sb-locked').textContent = locked.length || '0';
+  document.getElementById('sb-review').textContent = review.length || '0';
+}
+
+// ─── DASHBOARD RECENT ──────────────────────────────────────────
+function renderDashRecent() {
+  const el = document.getElementById('dash-recent-files');
+  const recent = [...allFiles].slice(0,6);
+  if (!recent.length) { el.innerHTML='<div style="padding:20px;text-align:center;color:var(--tx-3)">Chưa có file nào</div>'; return; }
+  el.innerHTML = `<table class="ft"><tbody>${recent.map(f=>{
+    const ft = getFileType(f.name, f.mimeType);
+    const ap = f.appProperties || {};
+    return `<tr onclick="openPanel('${f.id}')">
+      <td><div class="f-cell"><div class="f-icon ${ft.cls}">${ft.lbl}</div>
+      <div><div class="f-name" style="font-size:12.5px">${f.name}</div><div class="f-desc">${ap.vaultProject||'—'}</div></div></div></td>
+      <td><span class="ver-tag cur" style="font-size:10px">${ap.vaultVersion||'v1.0'}</span></td>
+      <td>${getStatusBadge(ap)}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function renderLockedList() {
+  const el = document.getElementById('dash-locked-list');
+  const locked = allFiles.filter(f => f.appProperties?.vaultStatus === 'locked');
+  if (!locked.length) { el.innerHTML='<div style="text-align:center;padding:16px;color:var(--tx-3);font-size:12.5px">Không có file nào bị lock ✓</div>'; return; }
+  el.innerHTML = locked.map(f => {
+    const ap = f.appProperties || {};
+    const overdue = ap.vaultCheckoutAt && (Date.now() - new Date(ap.vaultCheckoutAt)) > 3*86400000;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:7px;background:${overdue?'var(--red-dim)':'var(--amber-dim)'};margin-bottom:6px">
+      <div class="mini-av" style="background:${overdue?'var(--red)':'var(--amber)'}">${(ap.vaultCheckoutBy||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+        <div style="font-size:11px;color:${overdue?'var(--red)':'var(--tx-3)'}">${ap.vaultCheckoutBy||'?'} · ${overdue?'⚠ Quá hạn':fmtDate(ap.vaultCheckoutAt)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderReviewTable() {
+  const review = allFiles.filter(f => f.appProperties?.vaultStatus === 'review');
+  const el = document.getElementById('review-tbody');
+  if (!review.length) {
+    el.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-title">Không có file chờ duyệt</div></div></td></tr>`;
+    return;
+  }
+  el.innerHTML = review.map(f => {
+    const ap = f.appProperties || {};
+    const owner = f.owners?.[0]?.displayName || '—';
+    return `<tr><td><div class="f-cell"><div class="f-icon ${getFileType(f.name,f.mimeType).cls}">${getFileType(f.name,f.mimeType).lbl}</div><div><div class="f-name">${f.name}</div></div></div></td>
+    <td><span class="ver-tag">${ap.vaultVersion||'v1.0'}</span></td>
+    <td>${owner}</td>
+    <td style="font-size:12px;color:var(--tx-3)">${fmtDate(f.modifiedTime)}</td>
+    <td style="font-size:12px;color:var(--tx-2)">${ap.vaultNote||'—'}</td>
+    <td><div style="display:flex;gap:6px">
+      <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green)" onclick="approveFile('${f.id}','${f.name}')">✓ Duyệt</button>
+      <button class="btn btn-secondary btn-sm" onclick="rejectFile('${f.id}','${f.name}')">✗ Từ chối</button>
+    </div></td></tr>`;
+  }).join('');
+}
+
+function renderLockedTable() {
+  const locked = allFiles.filter(f => f.appProperties?.vaultStatus === 'locked');
+  const el = document.getElementById('locked-tbody');
+  document.getElementById('locked-sub').textContent = `${locked.length} file đang bị lock`;
+  if (!locked.length) {
+    el.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-title">Không có file nào bị lock ✓</div></div></td></tr>`;
+    return;
+  }
+  el.innerHTML = locked.map(f => {
+    const ap = f.appProperties || {};
+    const checkedAt = ap.vaultCheckoutAt ? new Date(ap.vaultCheckoutAt) : null;
+    const overdue = checkedAt && (Date.now() - checkedAt) > 3*86400000;
+    const dur = checkedAt ? fmtDate(ap.vaultCheckoutAt) : '—';
+    return `<tr style="${overdue?'background:var(--red-dim)':''}">
+      <td><div class="f-cell"><div class="f-icon ${getFileType(f.name,f.mimeType).cls}">${getFileType(f.name,f.mimeType).lbl}</div><div><div class="f-name">${f.name}</div>${overdue?'<div class="f-desc" style="color:var(--red)">⚠ QUÁ HẠN</div>':''}</div></div></td>
+      <td style="font-size:12.5px">${ap.vaultCheckoutBy||'—'}</td>
+      <td style="font-size:12px;color:var(--tx-3);font-family:'IBM Plex Mono',monospace">${dur}</td>
+      <td>${overdue?`<span class="s-badge s-locked">Quá hạn</span>`:`<span class="s-badge s-review">Đang lock</span>`}</td>
+      <td><button class="btn btn-sm ${overdue?'btn-primary':' btn-secondary'}" style="${overdue?'background:var(--red);color:#fff':''}" onclick="forceUnlock('${f.id}','${f.name}')">Force Unlock</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderActivityLog() {
+  const el = document.getElementById('activity-list');
+  if (!activityLog.length) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--tx-3);font-size:12.5px">Log sẽ hiện ở đây sau khi có thao tác</div>';
+    return;
+  }
+  el.innerHTML = activityLog.slice(0,20).map(a => `
+    <div class="act-item">
+      <div class="act-icon-box ${a.type}"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">${a.icon}</svg></div>
+      <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+    </div>`).join('');
+}
+
+function addActivity(type, text) {
+  const icons = {
+    ai_up:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+    ai_co:'<path d="M12 15v-3m0 0V9m0 3H9m3 0h3"/><rect x="3" y="4" width="18" height="18" rx="2"/>',
+    ai_ci:'<path d="M5 13l4 4L19 7"/>',
+    ai_ap:'<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+    ai_del:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+  };
+  activityLog.unshift({ type, text, icon: icons[type]||icons.ai_ci, time: new Date().toLocaleString('vi-VN') });
+  renderActivityLog();
+}
+
+// ─── FILE ACTIONS ───────────────────────────────────────────────
+async function checkoutFile(fileId, fileName) {
+  try {
+    await gFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, 'PATCH', {
+      appProperties: {
+        vaultStatus: 'locked',
+        vaultCheckoutBy: currentUser?.email || 'unknown',
+        vaultCheckoutAt: new Date().toISOString()
+      }
+    });
+    addActivity('ai_co', `<strong>${currentUser?.name||'Bạn'}</strong> đã check out <strong>${fileName}</strong>`);
+    await loadAllFiles();
+    toast(`"${fileName}" đã được check out — file bị lock`, 'warn');
+  } catch(e) { toast('Lỗi check out: '+e.message, 'err'); }
+}
+
+async function forceUnlock(fileId, fileName) {
+  try {
+    await gFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, 'PATCH', {
+      appProperties: { vaultStatus: 'free', vaultCheckoutBy: '', vaultCheckoutAt: '' }
+    });
+    addActivity('ai_ci', `<strong>Admin</strong> đã force unlock <strong>${fileName}</strong>`);
+    await loadAllFiles();
+    toast(`"${fileName}" đã được unlock bởi Admin ✓`, 'ok');
+  } catch(e) { toast('Lỗi unlock: '+e.message, 'err'); }
+}
+
+async function approveFile(fileId, fileName) {
+  try {
+    await gFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, 'PATCH', {
+      appProperties: { vaultStatus: 'approved' }
+    });
+    addActivity('ai_ap', `<strong>${currentUser?.name||'Admin'}</strong> đã duyệt <strong>${fileName}</strong>`);
+    await loadAllFiles();
+    toast(`"${fileName}" đã được phê duyệt ✓`, 'ok');
+  } catch(e) { toast('Lỗi duyệt: '+e.message, 'err'); }
+}
+
+async function rejectFile(fileId, fileName) {
+  try {
+    await gFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, 'PATCH', {
+      appProperties: { vaultStatus: 'free' }
+    });
+    await loadAllFiles();
+    toast(`"${fileName}" đã bị từ chối`, 'warn');
+  } catch(e) { toast('Lỗi từ chối: '+e.message, 'err'); }
+}
+
+function downloadFile(fileId, fileName) {
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${accessToken}`;
+  const a = document.createElement('a');
+  a.href = url; a.download = fileName; a.click();
+  addActivity('ai_ci', `<strong>${currentUser?.name||'Bạn'}</strong> đã download <strong>${fileName}</strong>`);
+  toast(`Đang tải "${fileName}"…`, 'ok');
+}
+
+// ─── UPLOAD ────────────────────────────────────────────────────
+function handleFileSelect(files) {
+  pendingFiles = Array.from(files);
+  const list = document.getElementById('upload-list');
+  list.innerHTML = pendingFiles.map((f,i) => `
+    <div class="upload-item" id="upi-${i}">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${f.name}</span>
+      <span style="font-size:11px;color:var(--tx-3)">${fmtSize(f.size)}</span>
+      <div class="upload-prog"><div class="upload-prog-fill" id="upb-${i}" style="width:0%"></div></div>
+    </div>`).join('');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dz').classList.remove('dragging');
+  handleFileSelect(e.dataTransfer.files);
+}
+
+async function doUpload() {
+  if (!pendingFiles.length) { toast('Chọn file trước!', 'warn'); return; }
+  if (!vaultFolderId) { toast('Chưa kết nối Google Drive', 'err'); return; }
+  const btn = document.getElementById('btn-upload');
+  btn.disabled = true; btn.textContent = 'Đang upload…';
+  const project = document.getElementById('up-project').value;
+  const note = document.getElementById('up-note').value;
+  for (let i = 0; i < pendingFiles.length; i++) {
+    const file = pendingFiles[i];
+    try {
+      const metadata = {
+        name: file.name,
+        parents: [vaultFolderId],
+        description: project,
+        appProperties: {
+          vaultVersion: 'v1.0',
+          vaultStatus: 'free',
+          vaultProject: project,
+          vaultNote: note,
+          vaultUploadedBy: currentUser?.email || '',
+          vaultUploadedAt: new Date().toISOString()
+        }
+      };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', file);
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form
+      });
+      document.getElementById(`upb-${i}`).style.width = '100%';
+      addActivity('ai_up', `<strong>${currentUser?.name||'Bạn'}</strong> đã upload <strong>${file.name}</strong> — ${project}`);
+    } catch(e) {
+      toast(`Lỗi upload ${file.name}: ${e.message}`, 'err');
+    }
+  }
+  btn.disabled = false; btn.textContent = 'Upload lên Drive';
+  closeModal('modal-upload');
+  pendingFiles = [];
+  document.getElementById('upload-list').innerHTML = '';
+  await loadAllFiles();
+  toast(`Đã upload ${pendingFiles.length||'các'} file lên Google Drive ✓`, 'ok');
+}
+
+// ─── PANEL ─────────────────────────────────────────────────────
+async function openPanel(fileId) {
+  const file = allFiles.find(f => f.id === fileId);
+  if (!file) return;
+  currentFileForPanel = file;
+  document.getElementById('panel-fname').textContent = file.name;
+  const ap = file.appProperties || {};
+  document.getElementById('panel-fmeta').textContent = `${ap.vaultProject||'STARDUCT_VAULT'} · ${fmtSize(file.size)} · ${ap.vaultVersion||'v1.0'}`;
+  document.getElementById('panel-ov').classList.add('open');
+  await renderPanelHistory(file);
+}
+
+async function renderPanelHistory(file) {
+  const ap = file.appProperties || {};
+  const body = document.getElementById('panel-body');
+  body.innerHTML = `
+    <div style="display:flex;gap:7px;margin-bottom:18px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('upload')">+ Phiên bản mới</button>
+      ${ap.vaultStatus!=='locked' ? `<button class="btn btn-secondary btn-sm" onclick="checkoutFile('${file.id}','${file.name}');closePanel()">Check Out</button>` : `<button class="btn btn-secondary btn-sm" onclick="forceUnlock('${file.id}','${file.name}');closePanel()">Force Unlock</button>`}
+      <button class="btn btn-secondary btn-sm" onclick="downloadFile('${file.id}','${file.name}')">Download</button>
+    </div>
+    <div class="ver-item">
+      <div class="ver-line"></div>
+      <div class="ver-dot vd-cur">${(ap.vaultVersion||'v1').replace('v','')}</div>
+      <div class="ver-body">
+        <div class="ver-top"><span class="ver-num">${ap.vaultVersion||'v1.0'}</span><span class="vtag vt-cur">Current</span>${getStatusBadge(ap)}</div>
+        <div class="ver-note">${ap.vaultNote||'Không có ghi chú'}</div>
+        <div class="ver-meta"><span>${file.owners?.[0]?.displayName||'—'}</span><span>${fmtDate(file.modifiedTime)}</span><span>${fmtSize(file.size)}</span></div>
+        <div class="ver-acts"><button class="btn btn-secondary btn-sm" onclick="downloadFile('${file.id}','${file.name}')">Download</button></div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:20px;color:var(--tx-3);font-size:12px">Version history đầy đủ sẽ lưu khi Check-in từng phiên bản</div>`;
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const file = currentFileForPanel;
+  if (!file) return;
+  const body = document.getElementById('panel-body');
+  if (tab === 'history') { renderPanelHistory(file); return; }
+  if (tab === 'props') {
+    const ap = file.appProperties || {};
+    body.innerHTML = `<table style="width:100%;border-collapse:collapse">${[
+      ['Tên file', file.name],['Loại', getFileType(file.name,file.mimeType).lbl],
+      ['Phiên bản', ap.vaultVersion||'v1.0'],['Trạng thái', ap.vaultStatus||'free'],
+      ['Dung lượng', fmtSize(file.size)],['Project', ap.vaultProject||'—'],
+      ['Người tạo', file.owners?.[0]?.displayName||'—'],
+      ['Ngày tạo', new Date(file.createdTime).toLocaleDateString('vi-VN')],
+      ['Cập nhật', new Date(file.modifiedTime).toLocaleString('vi-VN')],
+      ['Drive ID', file.id],
+    ].map(([k,v]) => `<tr><td style="padding:9px 0;font-size:11.5px;color:var(--tx-3);font-weight:600;width:38%;border-bottom:1px solid var(--border)">${k}</td><td style="padding:9px 0;font-size:13px;border-bottom:1px solid var(--border);font-family:${k==='Drive ID'?'IBM Plex Mono,monospace':'inherit'};font-size:${k==='Drive ID'?'10.5px':'13px'};color:var(--tx-1)">${v}</td></tr>`).join('')}</table>`;
+    return;
+  }
+  body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--tx-3);font-size:12.5px">Access log sẽ hiển thị sau khi có lịch sử thao tác</div>`;
+}
+
+function closePanel() { document.getElementById('panel-ov').classList.remove('open'); }
+
+// ─── FILTER / SEARCH ───────────────────────────────────────────
+function filterType(type, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  if (type === 'all') { renderFileTable(allFiles); return; }
+  const map = { cad:['stp','dwg'], pdf:['pdf'], xls:['xls'], doc:['doc','ppt'] };
+  renderFileTable(allFiles.filter(f => (map[type]||[]).some(t => getFileType(f.name,f.mimeType).lbl.toLowerCase().startsWith(t))));
+}
+
+function searchFiles(val) {
+  if (!val) { renderFileTable(allFiles); return; }
+  const v = val.toLowerCase();
+  renderFileTable(allFiles.filter(f => f.name.toLowerCase().includes(v) || (f.appProperties?.vaultProject||'').toLowerCase().includes(v)));
+}
+
+function filterByProject(proj) {
+  showView('files', document.querySelectorAll('.sb-item')[1]);
+  renderFileTable(allFiles.filter(f => (f.appProperties?.vaultProject||f.description||'').includes(proj)));
+}
+
+// ─── SYNC ──────────────────────────────────────────────────────
+async function syncDrive() {
+  setSyncStatus('syncing', 'Syncing…');
+  await loadAllFiles();
+  await loadDriveStorage();
+  toast('Đã đồng bộ với Google Drive ✓', 'ok');
+}
+
+function setSyncStatus(state, text) {
+  const pill = document.getElementById('sync-pill');
+  const txt = document.getElementById('sync-text');
+  pill.className = 'sync-pill' + (state==='syncing'?' syncing':state==='error'?' error':'');
+  txt.textContent = text;
+}
+
+function openDriveFolder() {
+  if (vaultFolderId) window.open(`https://drive.google.com/drive/folders/${vaultFolderId}`, '_blank');
+  else toast('Chưa kết nối Drive', 'warn');
+}
+
+// ─── USER MANAGEMENT ──────────────────────────────────────────
+async function renderUsersGrid() {
+  const el = document.getElementById('users-grid');
+  if (!currentUser) return;
+  el.innerHTML = `
+    <div class="u-card">
+      <div class="u-av">${currentUser.picture ? `<img src="${currentUser.picture}">` : currentUser.name?.[0]?.toUpperCase()}</div>
+      <div class="u-name">${currentUser.name}</div>
+      <div class="u-email">${currentUser.email}</div>
+      <span class="role-pill r-admin">Administrator</span>
+      <div class="u-stats">
+        <div class="u-stat"><div class="u-stat-v">${allFiles.length}</div><div class="u-stat-l">Files</div></div>
+        <div class="u-stat"><div class="u-stat-v">${allFiles.filter(f=>f.appProperties?.vaultCheckoutBy===currentUser.email).length}</div><div class="u-stat-l">Locked</div></div>
+      </div>
+    </div>
+    <div class="u-card" style="border:2px dashed var(--border);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;" onclick="openModal('newUser')">
+      <div style="width:42px;height:42px;border-radius:50%;background:var(--surface);border:2px dashed var(--border-2);display:flex;align-items:center;justify-content:center;color:var(--tx-3);margin-bottom:10px;font-size:22px">+</div>
+      <div style="font-size:13px;font-weight:600;color:var(--tx-3)">Thêm User mới</div>
+      <div style="font-size:11.5px;color:var(--tx-3);margin-top:4px">Phân quyền Drive</div>
+    </div>`;
+}
+
+async function inviteUser() {
+  const email = document.getElementById('nu-email').value;
+  const role = document.getElementById('nu-role').value;
+  if (!email) { toast('Nhập email!', 'warn'); return; }
+  try {
+    const driveRole = ['admin','lead'].includes(role) ? 'writer' : role==='engineer' ? 'writer' : 'reader';
+    await gFetch(`https://www.googleapis.com/drive/v3/files/${vaultFolderId}/permissions`, 'POST', {
+      type: 'user', role: driveRole, emailAddress: email,
+      sendNotificationEmail: true,
+      emailMessage: `Bạn đã được mời vào STARDUCT VAULT với vai trò ${role}. Truy cập qua hệ thống quản lý tài liệu kỹ thuật.`
+    });
+    addActivity('ai_ap', `<strong>Admin</strong> đã mời <strong>${email}</strong> vào Vault (${role})`);
+    closeModal('modal-newUser');
+    toast(`Đã gửi lời mời cho ${email} ✓`, 'ok');
+    await renderUsersGrid();
+  } catch(e) { toast('Lỗi mời user: '+e.message, 'err'); }
+}
+
+async function createProject() {
+  const name = document.getElementById('np-name').value;
+  if (!name) { toast('Nhập tên project!', 'warn'); return; }
+  try {
+    await gFetch('https://www.googleapis.com/drive/v3/files', 'POST', {
+      name, mimeType: 'application/vnd.google-apps.folder',
+      parents: [vaultFolderId],
+      description: document.getElementById('np-desc').value,
+      appProperties: { vaultProject: name }
+    });
+    closeModal('modal-newProject');
+    await loadAllFiles();
+    toast(`Project "${name}" đã tạo trên Drive ✓`, 'ok');
+  } catch(e) { toast('Lỗi tạo project: '+e.message, 'err'); }
+}
+
+// ─── HELPER: gFetch ────────────────────────────────────────────
+async function gFetch(url, method='GET', body=null) {
+  const opts = { method, headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(()=>({}));
+    if (r.status === 401) { toast('Token hết hạn, vui lòng đăng nhập lại', 'err'); signOut(); }
+    throw new Error(err.error?.message || `HTTP ${r.status}`);
+  }
+  if (r.status === 204 || method === 'DELETE') return {};
+  return r.json();
+}
+
+// ─── NAV ───────────────────────────────────────────────────────
+function showView(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if (el) { document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+  const titles = { dashboard:'Dashboard', files:'File Repository', locked:'Checked Out', review:'Pending Review', activity:'Activity Log', users:'User Management', settings:'Settings' };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
+  if (name === 'locked') renderLockedTable();
+  if (name === 'users') renderUsersGrid();
+}
+
+function openModal(id) { document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-ov').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+function toast(msg, type='') {
+  const tc = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { ok:'✓ ', err:'✕ ', warn:'⚠ ' };
+  t.innerHTML = `<span>${icons[type]||'ℹ '}</span><span>${msg}</span>`;
+  tc.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); }, 3500);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePanel(); document.querySelectorAll('.modal-ov').forEach(m=>m.classList.remove('open')); }
+});
+</script>
+</body>
+</html>
